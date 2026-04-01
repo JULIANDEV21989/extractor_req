@@ -1,0 +1,37 @@
+# Configuración del Extractor de Requerimientos
+# Copia este archivo como config.yaml y ajusta los valores
+
+# Carpeta de entrada (donde colocas tus documentos)
+input_dir: "input"
+
+# Carpeta de salida
+output_dir: "output"
+
+# --- Extracción de Video ---
+video:
+  # Intervalo entre frames extraídos (segundos)
+  frame_interval: 15
+  # Modelo Whisper para transcripción de audio: tiny|base|small|medium|large-v3
+  whisper_model: "medium"
+  # Idioma del audio (es=español, en=inglés, auto=detectar)
+  language: "es"
+  # Transcribir audio además de extraer frames
+  transcribe_audio: true
+
+# --- Análisis LLM ---
+analysis:
+  # Proveedor: "anthropic" (API) o "none" (solo consolida, sin análisis LLM)
+  provider: "anthropic"
+  # Modelo de Claude a usar
+  model: "claude-sonnet-4-20250514"
+  # API key (también puedes usar la variable de entorno ANTHROPIC_API_KEY)
+  api_key: ""
+  # Tokens máximos para la respuesta
+  max_tokens: 16000
+
+# --- Salida ---
+output:
+  # Formatos de salida: markdown, docx, ambos
+  formats:
+    - "markdown"
+    - "docx"

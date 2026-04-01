@@ -1,0 +1,24 @@
+__pycache__/
+*.pyc
+.env
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Output generado (la carpeta de salida del CLI, no el modulo Python)
+/output/
+input/*
+!input/.gitkeep
+
+# Modelos descargados
+models/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

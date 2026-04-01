@@ -1,0 +1,33 @@
+[project]
+name = "extractor-req"
+version = "1.0.0"
+description = "Extractor inteligente de requerimientos técnicos a partir de documentos, videos y correos."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    {name = "Cristian Cedeño", email = "cristian.c@transfeymar.com"},
+]
+
+dependencies = [
+    "pymupdf>=1.25.0",
+    "pymupdf4llm>=0.0.17",
+    "python-docx>=1.1.0",
+    "faster-whisper>=1.1.0",
+    "anthropic>=0.40.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["ruff", "pytest"]
+
+[project.scripts]
+extractor-req = "extractor_req.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["extractor_req*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
