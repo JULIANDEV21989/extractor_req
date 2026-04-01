@@ -9,6 +9,10 @@ from .extractors.docx import extract_docx
 from .extractors.video import extract_video
 from .extractors.image import extract_image
 from .extractors.email import extract_email
+from .extractors.audio import extract_audio
+from .extractors.pptx import extract_pptx
+from .extractors.spreadsheet import extract_spreadsheet
+from .extractors.web import extract_web
 
 
 def _extract_text(file_path: str) -> str:
@@ -29,9 +33,17 @@ def extract_file(
     extractors = {
         "pdf": lambda fi: extract_pdf(fi.path),
         "docx": lambda fi: extract_docx(fi.path),
+        "pptx": lambda fi: extract_pptx(fi.path),
+        "spreadsheet": lambda fi: extract_spreadsheet(fi.path),
         "email": lambda fi: extract_email(fi.path),
         "image": lambda fi: extract_image(fi.path, api_key=api_key),
         "text": lambda fi: _extract_text(fi.path),
+        "web": lambda fi: extract_web(fi.path),
+        "audio": lambda fi: extract_audio(
+            fi.path,
+            whisper_model=vc.get("whisper_model", "medium"),
+            language=vc.get("language", "es"),
+        ),
         "video": lambda fi: extract_video(
             fi.path,
             output_dir=os.path.join(output_dir, "frames"),
@@ -39,6 +51,7 @@ def extract_file(
             transcribe=vc.get("transcribe_audio", True),
             whisper_model=vc.get("whisper_model", "medium"),
             language=vc.get("language", "es"),
+            api_key=api_key,
         ),
     }
 

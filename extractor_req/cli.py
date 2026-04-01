@@ -33,9 +33,11 @@ def main():
 Ejemplos:
   extractor-req                          # Usa config.yaml, analiza input/ y genera output/
   extractor-req -i docs/ -o resultado/   # Carpetas personalizadas
-  extractor-req --skip-video             # Omite transcripción de video
+  extractor-req --skip-video             # Omite extracción de video
   extractor-req --skip-analysis          # Solo consolida, sin análisis LLM
   extractor-req --api-key sk-ant-xxx     # API key inline
+  extractor-req --urls https://example.com,https://other.com  # Extraer webs
+  extractor-req --repos user/repo1,user/repo2  # Extraer repos GitHub
         """,
     )
     parser.add_argument("-i", "--input", help="Carpeta con documentos fuente")
@@ -48,6 +50,8 @@ Ejemplos:
     parser.add_argument("--whisper-model", choices=["tiny", "base", "small", "medium", "large-v3"])
     parser.add_argument("--no-transcribe", action="store_true", help="Solo extraer frames, sin transcribir audio")
     parser.add_argument("--skip-scope", action="store_true", help="Omitir generacion de documento de alcance para stakeholders")
+    parser.add_argument("--urls", help="URLs de páginas web a extraer (separadas por coma)")
+    parser.add_argument("--repos", help="URLs de repos GitHub a extraer (separadas por coma)")
 
     args = parser.parse_args()
 
@@ -135,6 +139,26 @@ Ejemplos:
 
     elapsed = time.time() - start
     console.print(f"\n[green]Extracción completada[/] en {elapsed:.1f}s — {len(consolidated):,} caracteres")
+
+    # Extraer URLs si se proporcionaron
+    if args.urls:
+        from .extractors.web import extract_urls as _extract_urls
+        url_list = [u.strip() for u in args.urls.split(",") if u.strip()]
+        if url_list:
+            console.print(f"\n  Extrayendo {len(url_list)} URL(s)...")
+            url_content = _extract_urls(url_list)
+            consolidated += f"\n\n---\n## Contenido Web\n\n{url_content}"
+            console.print(f"  [green]URLs procesadas[/]")
+
+    # Extraer repos GitHub si se proporcionaron
+    if args.repos:
+        from .extractors.github_repo import extract_repos_from_list
+        repo_list = [r.strip() for r in args.repos.split(",") if r.strip()]
+        if repo_list:
+            console.print(f"\n  Extrayendo {len(repo_list)} repositorio(s)...")
+            repo_content = extract_repos_from_list(repo_list)
+            consolidated += f"\n\n---\n## Repositorios GitHub\n\n{repo_content}"
+            console.print(f"  [green]Repositorios procesados[/]")
 
     # Guardar consolidado
     os.makedirs(output_path, exist_ok=True)

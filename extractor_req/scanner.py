@@ -5,15 +5,24 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 EXTENSION_MAP: dict[str, str] = {
+    # Documentos
     ".pdf": "pdf",
     ".docx": "docx", ".doc": "docx",
+    ".pptx": "pptx", ".ppt": "pptx",
+    ".xlsx": "spreadsheet", ".xls": "spreadsheet", ".csv": "spreadsheet",
+    # Multimedia
     ".png": "image", ".jpg": "image", ".jpeg": "image", ".bmp": "image",
     ".tiff": "image", ".gif": "image", ".webp": "image",
     ".mp4": "video", ".avi": "video", ".mov": "video",
     ".mkv": "video", ".webm": "video",
+    ".mp3": "audio", ".wav": "audio", ".m4a": "audio", ".ogg": "audio",
+    ".flac": "audio", ".aac": "audio", ".wma": "audio",
+    # Comunicaciones
     ".eml": "email", ".msg": "email",
-    ".xlsx": "spreadsheet", ".xls": "spreadsheet", ".csv": "spreadsheet",
+    # Texto
     ".txt": "text", ".md": "text", ".log": "text",
+    # Web
+    ".html": "web", ".htm": "web",
 }
 
 
