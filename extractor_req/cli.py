@@ -1,6 +1,7 @@
 """CLI principal del extractor de requerimientos."""
 
 import argparse
+import json
 import os
 import sys
 import time
@@ -14,6 +15,11 @@ from .config import load_config
 from .scanner import scan_directory
 from .consolidator import consolidate
 from .analysis.analyzer import analyze_requirements
+from .analysis.scope_spec import generate_scope_spec
+from .analysis.branding_detector import detect_branding
+from .scope.mockup_generator import generate_mockups
+from .scope.docx_builder import build_scope_docx
+from .scope.branding_prompt import prompt_branding_selection
 from .output.writer import save_markdown, save_docx
 
 console = Console()
@@ -41,6 +47,7 @@ Ejemplos:
     parser.add_argument("--skip-analysis", action="store_true", help="Solo consolidar, sin análisis LLM")
     parser.add_argument("--whisper-model", choices=["tiny", "base", "small", "medium", "large-v3"])
     parser.add_argument("--no-transcribe", action="store_true", help="Solo extraer frames, sin transcribir audio")
+    parser.add_argument("--skip-scope", action="store_true", help="Omitir generacion de documento de alcance para stakeholders")
 
     args = parser.parse_args()
 
@@ -135,6 +142,7 @@ Ejemplos:
     console.print(f"  Consolidado: [link file://{md_path}]{md_path}[/]")
 
     # ==================== FASE 3: ANALISIS LLM ====================
+    requirements = None
     if not args.skip_analysis:
         console.print("\n[bold yellow]FASE 3:[/] Analizando con Claude...\n")
 
@@ -171,7 +179,77 @@ Ejemplos:
     else:
         console.print("\n[dim]Análisis LLM omitido (--skip-analysis)[/]")
 
-    # ==================== FASE 4: SALIDA ====================
+    # ==================== FASE 4: DOCUMENTO DE ALCANCE ====================
+    if not args.skip_scope and not args.skip_analysis and requirements and api_key and config.scope.enabled:
+        console.print("\n[bold yellow]FASE 4:[/] Generando documento de alcance para stakeholders...\n")
+
+        # Step 0: Detect and confirm branding colors
+        branding_primary = config.branding.primary_color
+        branding_secondary = config.branding.secondary_color
+        branding_company = config.branding.company_name
+
+        # Only run detection if company_name is not already set in config
+        if not branding_company:
+            try:
+                with console.status("[bold cyan]Detectando colores corporativos...[/]", spinner="dots"):
+                    branding_info = detect_branding(
+                        consolidated,
+                        api_key=api_key,
+                        model=config.analysis.model,
+                    )
+                branding_primary, branding_secondary, branding_company = prompt_branding_selection(
+                    branding_info, console,
+                )
+            except Exception as e:
+                console.print(f"[yellow]No se pudieron detectar colores:[/] {e}")
+                console.print(f"[dim]Usando colores por defecto: {branding_primary} + {branding_secondary}[/]\n")
+
+        try:
+            # Step 1: Generate scope spec JSON via Claude
+            with console.status("[bold cyan]Generando especificacion de alcance con Claude...[/]", spinner="dots"):
+                scope_spec = generate_scope_spec(
+                    requirements_content=requirements,
+                    consolidated_content=consolidated,
+                    api_key=api_key,
+                    model=config.scope.model,
+                    max_tokens=config.scope.max_tokens,
+                )
+
+            # Save JSON spec for debugging/reuse
+            spec_json_path = os.path.join(output_path, "scope_spec.json")
+            with open(spec_json_path, "w", encoding="utf-8") as f:
+                json.dump(scope_spec, f, ensure_ascii=False, indent=2)
+            console.print(f"  [dim]Spec JSON:[/] {spec_json_path}")
+
+            # Step 2: Generate mockups
+            console.print("  Generando mockups visuales...")
+            mockups_dir = os.path.join(output_path, "mockups")
+            mockups = generate_mockups(
+                scope_spec,
+                primary_color=branding_primary,
+                secondary_color=branding_secondary,
+                output_dir=mockups_dir,
+            )
+            console.print(f"  [green]{len(mockups)} mockups generados[/] en {mockups_dir}")
+
+            # Step 3: Build professional DOCX
+            console.print("  Construyendo DOCX profesional...")
+            scope_docx_path = build_scope_docx(
+                scope_spec,
+                mockups,
+                primary_color=branding_primary,
+                secondary_color=branding_secondary,
+                output_path=os.path.join(output_path, "alcance_stakeholders.docx"),
+            )
+            console.print(f"  [green]Documento de alcance:[/] [link file://{scope_docx_path}]{scope_docx_path}[/]")
+
+        except Exception as e:
+            console.print(f"[red]Error generando documento de alcance:[/] {e}")
+            console.print("[dim]Los requerimientos y consolidado se generaron correctamente.[/]")
+    elif args.skip_scope:
+        console.print("\n[dim]Documento de alcance omitido (--skip-scope)[/]")
+
+    # ==================== FASE 5: SALIDA ====================
     if "docx" in config.output.formats:
         docx_path = save_docx(consolidated, os.path.join(output_path, "consolidado.docx"), "Consolidado de Levantamiento")
         console.print(f"  Consolidado DOCX: [link file://{docx_path}]{docx_path}[/]")

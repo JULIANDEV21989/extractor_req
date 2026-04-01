@@ -35,3 +35,25 @@ output:
   formats:
     - "markdown"
     - "docx"
+
+# --- Branding (para documento de alcance) ---
+branding:
+  # Color primario de la empresa (hex)
+  primary_color: "#C41E2A"
+  # Color secundario (hex)
+  secondary_color: "#1A1A1A"
+  # Nombre de la empresa (auto-detectado del analisis si esta vacio)
+  company_name: ""
+  # Subtitulo de la empresa
+  company_subtitle: ""
+  # Nombre del autor del documento
+  prepared_by: ""
+
+# --- Documento de Alcance para Stakeholders ---
+scope:
+  # Habilitar/deshabilitar generacion del documento de alcance
+  enabled: true
+  # Modelo de Claude para generar la especificacion del alcance
+  model: "claude-sonnet-4-20250514"
+  # Tokens maximos para la respuesta
+  max_tokens: 16000
